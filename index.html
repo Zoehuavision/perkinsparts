@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perkins 发动机零件号查询手册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF9F5;
+  --panel:#FFFFFF;
+  --ink:#1C2024;
+  --ink-soft:#5B6168;
+  --line:#E6E2D8;
+  --line-soft:#EFEBE1;
+  --steel:#2E4A63;
+  --steel-deep:#213748;
+  --brass:#A9762F;
+  --brass-soft:#F3E7D2;
+  --chip:#F2F1EC;
+  --ok:#3E7A52;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+
+header{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+  padding:22px 28px 18px;
+}
+.brand{display:flex; align-items:baseline; gap:12px; margin-bottom:16px;}
+.brand .mark{
+  width:34px; height:34px; border-radius:7px; background:var(--steel);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:700; font-size:14px; font-family:'IBM Plex Mono',monospace;
+  flex-shrink:0;
+}
+.brand h1{font-size:19px; font-weight:700; margin:0; letter-spacing:-0.01em;}
+.brand p{margin:0; font-size:12.5px; color:var(--ink-soft);}
+
+.searchbar{
+  display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:11px 14px; max-width:640px;
+}
+.searchbar svg{flex-shrink:0; opacity:0.45;}
+.searchbar input{
+  border:none; outline:none; background:transparent; flex:1;
+  font-size:14.5px; color:var(--ink); font-family:inherit;
+}
+.searchbar input::placeholder{color:#9CA0A6;}
+.searchbar .clear{
+  border:none; background:none; color:var(--ink-soft); cursor:pointer;
+  font-size:13px; padding:2px 6px; display:none;
+}
+.hint{margin-top:8px; font-size:12px; color:var(--ink-soft); max-width:640px;}
+.hint b{color:var(--steel); font-weight:600;}
+
+.layout{display:flex; min-height:calc(100vh - 128px);}
+aside{
+  width:230px; flex-shrink:0; border-right:1px solid var(--line);
+  padding:18px 12px; overflow-y:auto;
+}
+aside .label{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); padding:6px 10px 10px;}
+.model-btn{
+  display:flex; justify-content:space-between; align-items:center;
+  width:100%; text-align:left; background:none; border:none; cursor:pointer;
+  padding:8px 10px; border-radius:7px; font-size:13.5px; color:var(--ink);
+  font-family:'IBM Plex Mono',monospace; font-weight:500;
+}
+.model-btn:hover{background:var(--chip);}
+.model-btn.active{background:var(--steel); color:#fff;}
+.model-btn .n{font-size:10.5px; color:var(--ink-soft); font-family:'Inter',sans-serif;}
+.model-btn.active .n{color:#CBD8E2;}
+.model-btn.all{font-family:'Inter',sans-serif; font-weight:600;}
+
+main{flex:1; padding:22px 28px 60px; min-width:0;}
+.results-head{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:16px; flex-wrap:wrap; gap:10px;
+}
+.results-head h2{font-size:16px; margin:0; font-weight:600;}
+.results-head .count{color:var(--ink-soft); font-weight:400; font-size:13px;}
+.copy-all{
+  display:flex; align-items:center; gap:7px;
+  background:var(--steel); color:#fff; border:none; border-radius:8px;
+  padding:9px 15px; font-size:13px; font-weight:600; cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.copy-all:hover{background:var(--steel-deep);}
+.copy-all.done{background:var(--ok);}
+
+.cards{display:flex; flex-direction:column; gap:10px;}
+.card{
+  background:var(--panel); border:1px solid var(--line-soft); border-radius:10px;
+  padding:15px 17px;
+}
+.card-top{display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:9px;}
+.card-name{font-size:14.5px; font-weight:600;}
+.card-name .zh{color:var(--ink-soft); font-weight:400; font-size:13px; margin-left:6px;}
+.card-models{margin-top:5px; display:flex; flex-wrap:wrap; gap:5px;}
+.tag{
+  font-size:11px; font-family:'IBM Plex Mono',monospace; background:var(--chip);
+  color:var(--steel-deep); padding:2px 7px; border-radius:5px; cursor:pointer;
+}
+.tag:hover{background:var(--brass-soft); color:var(--brass);}
+.pns{display:flex; flex-wrap:wrap; gap:7px; margin:9px 0 6px;}
+.pn{
+  display:flex; align-items:center; gap:7px;
+  background:var(--paper); border:1px solid var(--line); border-radius:7px;
+  padding:6px 10px; font-size:13px; font-family:'IBM Plex Mono',monospace; font-weight:600;
+  cursor:pointer;
+}
+.pn:hover{border-color:var(--brass); color:var(--brass);}
+.pn svg{opacity:0.5; flex-shrink:0;}
+.pn.copied{background:#EAF4EC; border-color:var(--ok); color:var(--ok);}
+.note{font-size:12px; color:var(--ink-soft); line-height:1.5; margin-top:4px;}
+.empty{padding:60px 20px; text-align:center; color:var(--ink-soft); font-size:14px;}
+
+.toast{
+  position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--steel-deep); color:#fff; padding:10px 18px; border-radius:8px;
+  font-size:13px; opacity:0; pointer-events:none; transition:all .25s ease; z-index:50;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:5px;}
+
+@media (max-width:760px){
+  .layout{flex-direction:column;}
+  aside{width:100%; border-right:none; border-bottom:1px solid var(--line); max-height:180px;}
+  header{padding:18px 16px 14px;}
+  main{padding:16px 16px 50px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">PK</div>
+    <div>
+      <h1>Perkins 发动机零件号查询手册</h1>
+      <p>Engine Parts Cross-Reference · 按型号 / 零件号 / 关键字混合查询</p>
+    </div>
+  </div>
+  <div class="searchbar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="输入零件号 / 发动机型号 / 品名关键字，如 115017491 或 1004.4 或 活塞" autocomplete="off">
+    <button class="clear" id="clearBtn">✕</button>
+  </div>
+  <div class="hint">支持 <b>零件号</b> → 自动列出适配的所有发动机型号；支持 <b>发动机型号</b> → 列出该型号全部配件；也可直接输入 <b>品名/拼音关键字</b> 混合搜索。左侧点选型号可一键复制全部零件号。</div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="label">发动机型号 Engine Models</div>
+    <button class="model-btn all active" data-model="">全部型号 <span class="n" id="allCount"></span></button>
+    <div id="modelList"></div>
+  </aside>
+  <main>
+    <div class="results-head">
+      <h2 id="resultsTitle">全部配件</h2>
+      <button class="copy-all" id="copyAllBtn" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="copyAllLabel">复制该型号全部零件号</span>
+      </button>
+    </div>
+    <div class="cards" id="cards"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PARTS = [{"models": ["404", "404C-22", "404D-22"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["115017491"], "note": "Bore 84 mm; Overall length 87.80 mm; 3 rings"}, {"models": ["404"], "nameEn": "Crankshaft", "nameZh": "曲轴", "pns": ["115256750", "115256990"], "note": "Catalog lists application as 404"}, {"models": ["404"], "nameEn": "Water Pump", "nameZh": "水泵", "pns": ["145017951", "145017721"], "note": "Catalog lists application as 404"}, {"models": ["404"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["U5MK8265"], "note": "Application shown as 403/404"}, {"models": ["404", "CAT 3024"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["U5MK8266"], "note": "Application shown as 403/404/CAT3024"}, {"models": ["404"], "nameEn": "Inlet Valve", "nameZh": "进气门", "pns": ["120166380"], "note": "Catalog lists application as 404"}, {"models": ["404"], "nameEn": "Exhaust Valve", "nameZh": "排气门", "pns": ["1201716380"], "note": "Catalog lists application as 404"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147741"], "note": "Catalog application: 404C-22 / 400-4CYL"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147591"], "note": "Catalog application: 404C-22 / 400-4CYL"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147590"], "note": "Catalog application: 404C-22 / 400-4CYL"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147751"], "note": "Thickness 1.1 mm"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147771"], "note": "Thickness 1.3 mm"}, {"models": ["404D-22", "400-4CYL"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147721"], "note": "Graphite"}, {"models": ["404C-22"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["120996130", "111996401"], "note": "Catalog lists application as 404C-22"}, {"models": ["404C-22"], "nameEn": "Timing Gasket", "nameZh": "正时盖垫片", "pns": ["165996600"], "note": "Catalog lists application as 404C-22"}, {"models": ["404C-22"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["050209107"], "note": "Catalog lists application as 404C-22 / 403"}, {"models": ["404C-22", "400-4CYL"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["050209083"], "note": "Catalog lists application as 404C-22 / 400-4CYL"}, {"models": ["404C-22"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["198636160"], "note": "Catalog lists application as 404C-22"}, {"models": ["404C-22"], "nameEn": "Con Rod", "nameZh": "连杆", "pns": ["115026330"], "note": "Catalog lists application as 404"}, {"models": ["404"], "nameEn": "Water Pump", "nameZh": "水泵", "pns": ["145017951", "145017721"], "note": "Catalog lists application as 404"}, {"models": ["404C-22"], "nameEn": "Thermostat", "nameZh": "节温器", "pns": ["145206230"], "note": "Catalog lists application as 404"}, {"models": ["404", "404C-22"], "nameEn": "Water Hose", "nameZh": "水管", "pns": ["U45537130", "U45537140"], "note": "Catalog lists applications as 403/404"}, {"models": ["403", "403C-11", "403C-15", "403D-15"], "nameEn": "Crankshaft", "nameZh": "曲轴", "pns": ["115256950"], "note": "Catalog lists application as 403"}, {"models": ["403"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["U5MK8266", "U5MK8267", "T410626"], "note": "Catalog lists applications as 403; one also 404/CAT3024"}, {"models": ["403C-11"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147570"], "note": "Catalog lists application as 403C-11"}, {"models": ["403C-15", "403D-15"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["111147501"], "note": "Catalog lists application as 403C-15 / 403D-15"}, {"models": ["403C-15"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["111996420", "120996150"], "note": "Catalog lists application as 403C-15"}, {"models": ["403C-11"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["111996410", "120996140"], "note": "Catalog lists application as 403C-11"}, {"models": ["403"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["050209107"], "note": "Catalog lists application as 403C-22 / 403"}, {"models": ["403D-15"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["198636170"], "note": "Catalog lists application as 403D-15"}, {"models": ["403"], "nameEn": "Inlet Valve", "nameZh": "进气门", "pns": ["120166360"], "note": "Catalog lists application as 403"}, {"models": ["403"], "nameEn": "Exhaust Valve", "nameZh": "排气门", "pns": ["120166350"], "note": "Catalog lists application as 403"}, {"models": ["1004.4", "1004.4T"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["3135J186L", "U5LP0057"], "note": "Bore 100 mm; Overall length 108.2 mm; 3 rings"}, {"models": ["1004.4", "1006.6"], "nameEn": "Piston Ring", "nameZh": "活塞环", "pns": ["4181A019", "4181A027", "14181A041", "4222706M91"], "note": "Diameter 100 mm; 2.5+2.5+4"}, {"models": ["1004.4", "1006.6"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F051", "4132F043", "E3774840"], "note": "Catalog applications include 1004/1004.4"}, {"models": ["1004.4"], "nameEn": "Fuel Pump", "nameZh": "输油泵", "pns": ["2641A082", "4224451M91", "ULPK0007"], "note": "Catalog application includes 1004"}, {"models": ["1004"], "nameEn": "Water Pump", "nameZh": "水泵", "pns": ["U5MW0160", "U5MW0092", "41331E103", "4131E105", "41312154"], "note": "Catalog application includes 1004"}, {"models": ["1004"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["3681E025"], "note": "Catalog application 1004.4"}, {"models": ["1004.4"], "nameEn": "Upper Gasket Kit", "nameZh": "上修理包", "pns": ["U5LT0178", "U5LT1178", "U5LT1202"], "note": "Catalog application 1004.4"}, {"models": ["1004.4"], "nameEn": "Lower Gasket Kit", "nameZh": "下修理包", "pns": ["U5LB1164", "U5LB0151", "U5LB1163"], "note": "Catalog application 1004.4"}, {"models": ["1004.4", "1006.6"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["2418F701", "2418F704", "2418F436", "2418F475"], "note": "Catalog applications 1004.4/1006.6"}, {"models": ["1004.4", "1006.6"], "nameEn": "Oil Seal", "nameZh": "油封", "pns": ["2418F437"], "note": "Catalog application includes 1104C-E44T and 1004.4/1006.6"}, {"models": ["1004"], "nameEn": "Turbocharger", "nameZh": "涡轮增压器", "pns": ["2674A393"], "note": "Catalog application 1004"}, {"models": ["1004"], "nameEn": "Inlet Valve", "nameZh": "进气门", "pns": ["3142L072"], "note": "Catalog application 1004"}, {"models": ["1004"], "nameEn": "Exhaust Valve", "nameZh": "排气门", "pns": ["3142A051"], "note": "Catalog application 1004"}, {"models": ["1006.6", "1006.6T"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["3135J186L", "U5LP0057"], "note": "Catalog application 1006.6; bore 100 mm; length 108.2 mm; 3 rings"}, {"models": ["1006.6"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F057"], "note": "Catalog application 1006.6T"}, {"models": ["1006.6"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["3681H208"], "note": "Catalog application 1006.6"}, {"models": ["1006.6T"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["T3681H208B"], "note": "Catalog application 1006.6T"}, {"models": ["1006.6"], "nameEn": "Upper Gasket Kit", "nameZh": "上修理包", "pns": ["U5LT0179", "U5LT1179"], "note": "Catalog application 1006.6"}, {"models": ["1006.6"], "nameEn": "Lower Gasket Kit", "nameZh": "下修理包", "pns": ["U5LB0153", "U5LB1167"], "note": "Catalog application 1006.6"}, {"models": ["1006.6"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["3681A054"], "note": "Catalog application 1006.6"}, {"models": ["1006"], "nameEn": "Turbocharger", "nameZh": "涡轮增压器", "pns": ["2674A441", "2674A335"], "note": "Catalog application 1006"}, {"models": ["1103"], "nameEn": "Crankshaft", "nameZh": "曲轴", "pns": ["4181V017", "ZZ90236"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F072"], "note": "Catalog application 1103"}, {"models": ["1103T"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F073"], "note": "Catalog application 1103T"}, {"models": ["1103"], "nameEn": "Fuel Pump", "nameZh": "输油泵", "pns": ["4132A016"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["3681E049"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Upper Gasket Kit", "nameZh": "上修理包", "pns": ["U5LT0355"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Lower Gasket Kit", "nameZh": "下修理包", "pns": ["U5LB0379"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["3681A057"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Timing Gasket", "nameZh": "正时盖垫片", "pns": ["3681P046", "3681P053"], "note": "Catalog application 1103"}, {"models": ["1103"], "nameEn": "Water Pump Gasket", "nameZh": "水泵垫片", "pns": ["3681K038"], "note": "Catalog application 1103"}, {"models": ["1104"], "nameEn": "Crankshaft", "nameZh": "曲轴", "pns": ["ZZ90239", "ZZ90222", "ZZ90241", "ZZ90237", "ZZ90238"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F071"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Fuel Pump", "nameZh": "输油泵", "pns": ["4132A018"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["3681E051"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Upper Gasket Kit", "nameZh": "上修理包", "pns": ["U5LT0357"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Lower Gasket Kit", "nameZh": "下修理包", "pns": ["U5LB0381", "U5LB0382", "U5LB0383", "U5LB0384"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["3681A055"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Timing Gasket", "nameZh": "正时盖垫片", "pns": ["3681P047"], "note": "Catalog application 1104"}, {"models": ["1104"], "nameEn": "Oil Pan Gasket", "nameZh": "油底壳垫片", "pns": ["3681K036", "3681K037"], "note": "Catalog application 1104"}, {"models": ["1104D-E44TA"], "nameEn": "Lower Gasket Kit", "nameZh": "下修理包", "pns": ["T403040"], "note": "Catalog application 1104D-E44TA"}, {"models": ["1104D-E44TA"], "nameEn": "Upper Gasket Kit", "nameZh": "上修理包", "pns": ["U5LT1104D"], "note": "Catalog application 1104D-E44TA"}, {"models": ["1104D-E44TA"], "nameEn": "Timing Case Gasket", "nameZh": "正时室盖垫片", "pns": ["3681P054"], "note": "Catalog application 1104D-E44TA"}, {"models": ["1104D-E44TA"], "nameEn": "Oil Pan Gasket", "nameZh": "油底壳垫片", "pns": ["T420777"], "note": "Catalog application 1104D-E44TA"}, {"models": ["1104A-44T"], "nameEn": "Turbocharger", "nameZh": "涡轮增压器", "pns": ["2674A431"], "note": "Catalog application 1104A-44T"}, {"models": ["1106"], "nameEn": "Oil Pump", "nameZh": "机油泵", "pns": ["4132F074", "4132F068"], "note": "Catalog application 1106"}, {"models": ["1106C-70TA"], "nameEn": "Top Gasket", "nameZh": "气缸盖垫片", "pns": ["T408652", "T442648"], "note": "Catalog application 1106C-70TA"}, {"models": ["1106D"], "nameEn": "Full Gasket Kit", "nameZh": "全套垫片包", "pns": ["U5LC1106D-1", "U5LC1106D-2"], "note": "Catalog application 1106D"}, {"models": ["1106C-70TA"], "nameEn": "Full Gasket Kit", "nameZh": "全套垫片包", "pns": ["U5LC1106C-1", "U5LC1106C-2"], "note": "Catalog application 1106C-70TA"}, {"models": ["1106D"], "nameEn": "Valve Cover Gasket", "nameZh": "气门室盖垫片", "pns": ["3681A059", "3681A068"], "note": "Catalog application 1106D"}, {"models": ["1106D"], "nameEn": "Oil Pan Gasket", "nameZh": "油底壳垫片", "pns": ["3681K041", "3681K044"], "note": "Catalog application 1106D"}, {"models": ["1106A-70T", "1106D"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["3660149", "3660108"], "note": "Bore 105 mm"}, {"models": ["1106D"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["450-5996", "T417956"], "note": "Bore 105 mm"}, {"models": ["1106"], "nameEn": "Piston", "nameZh": "活塞", "pns": ["3707998", "T415098"], "note": "Bore 105 mm"}, {"models": ["1106D"], "nameEn": "Turbocharger", "nameZh": "涡轮增压器", "pns": ["2674A?"], "note": "Catalog page OCR does not provide a clean dedicated 1106 turbocharger part number"}];
+const INDEX_MODELS = ["403", "404", "404C-22", "404D-22", "1004.4", "1006.6", "1006.6T", "1103", "1103T", "1104", "1104D-E44TA", "1106", "1106C-70TA", "1106D", "3.152", "4.236", "4.248", "4.203"];
+
+const cardsEl = document.getElementById('cards');
+const modelListEl = document.getElementById('modelList');
+const resultsTitle = document.getElementById('resultsTitle');
+const searchEl = document.getElementById('search');
+const clearBtn = document.getElementById('clearBtn');
+const copyAllBtn = document.getElementById('copyAllBtn');
+const copyAllLabel = document.getElementById('copyAllLabel');
+const toastEl = document.getElementById('toast');
+
+let activeModel = '';
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 1600);
+}
+
+function copyText(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(()=>{});
+  }
+  document.body.removeChild(ta);
+}
+
+// build model counts
+const modelCounts = {};
+PARTS.forEach(p => p.models.forEach(m => { modelCounts[m] = (modelCounts[m]||0) + p.pns.length; }));
+document.getElementById('allCount').textContent = PARTS.reduce((a,p)=>a+p.pns.length,0);
+
+INDEX_MODELS.forEach(m => {
+  const btn = document.createElement('button');
+  btn.className = 'model-btn';
+  btn.dataset.model = m;
+  btn.innerHTML = m + ' <span class="n">' + (modelCounts[m]||0) + '</span>';
+  btn.addEventListener('click', () => {
+    activeModel = m;
+    searchEl.value = '';
+    render();
+  });
+  modelListEl.appendChild(btn);
+});
+
+function setActiveModelButton(){
+  document.querySelectorAll('.model-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.model === activeModel);
+  });
+}
+
+function matchQuery(p, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  if(p.models.some(m => m.toLowerCase().includes(q))) return true;
+  if(p.nameEn.toLowerCase().includes(q)) return true;
+  if(p.nameZh.includes(q)) return true;
+  if(p.pns.some(pn => pn.toLowerCase().includes(q))) return true;
+  if(p.note.toLowerCase().includes(q)) return true;
+  return false;
+}
+
+function render(){
+  setActiveModelButton();
+  const q = searchEl.value.trim();
+  clearBtn.style.display = q ? 'block' : 'none';
+
+  let filtered = PARTS.filter(p => {
+    const modelOk = activeModel ? p.models.includes(activeModel) : true;
+    return modelOk && matchQuery(p, q);
+  });
+
+  // header + copy-all button
+  if(activeModel && !q){
+    resultsTitle.innerHTML = activeModel + ' <span class="count">共 ' + filtered.reduce((a,p)=>a+p.pns.length,0) + ' 个零件号</span>';
+    copyAllBtn.style.display = 'flex';
+    copyAllLabel.textContent = '复制 ' + activeModel + ' 全部零件号';
+    copyAllBtn.onclick = () => {
+      const lines = filtered.map(p => {
+        const name = p.nameEn + (p.nameZh ? ' / ' + p.nameZh : '');
+        return name + '：' + p.pns.join(' / ');
+      });
+      const totalPns = filtered.reduce((a,p)=>a+p.pns.length,0);
+      copyText(lines.join('\n'));
+      copyAllBtn.classList.add('done');
+      copyAllLabel.textContent = '已复制 ' + totalPns + ' 个零件号 ✓';
+      showToast('已复制 ' + activeModel + ' 全部配件（含品名）到剪贴板');
+      setTimeout(()=>{ copyAllBtn.classList.remove('done'); copyAllLabel.textContent = '复制 ' + activeModel + ' 全部零件号'; }, 2000);
+    };
+  } else if(q){
+    resultsTitle.innerHTML = '搜索 “' + q + '” <span class="count">' + filtered.length + ' 条结果</span>';
+    copyAllBtn.style.display = 'none';
+  } else {
+    resultsTitle.innerHTML = '全部配件 <span class="count">' + filtered.length + ' 条记录</span>';
+    copyAllBtn.style.display = 'none';
+  }
+
+  cardsEl.innerHTML = '';
+  if(filtered.length === 0){
+    cardsEl.innerHTML = '<div class="empty">未找到匹配结果，请尝试其他零件号 / 型号 / 关键字</div>';
+    return;
+  }
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const modelsHtml = p.models.map(m => '<span class="tag" data-m="' + m + '">' + m + '</span>').join('');
+    const pnsHtml = p.pns.map(pn =>
+      '<span class="pn" data-pn="' + pn + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' + pn + '</span>'
+    ).join('');
+    card.innerHTML =
+      '<div class="card-top"><div>' +
+        '<span class="card-name">' + p.nameEn + (p.nameZh ? '<span class="zh">' + p.nameZh + '</span>' : '') + '</span>' +
+        '<div class="card-models">' + modelsHtml + '</div>' +
+      '</div></div>' +
+      '<div class="pns">' + pnsHtml + '</div>' +
+      (p.note ? '<div class="note">' + p.note + '</div>' : '');
+    cardsEl.appendChild(card);
+  });
+
+  cardsEl.querySelectorAll('.pn').forEach(el => {
+    el.addEventListener('click', () => {
+      copyText(el.dataset.pn);
+      el.classList.add('copied');
+      showToast('已复制零件号 ' + el.dataset.pn);
+      setTimeout(()=>el.classList.remove('copied'), 1200);
+    });
+  });
+  cardsEl.querySelectorAll('.tag').forEach(el => {
+    el.addEventListener('click', () => {
+      activeModel = el.dataset.m;
+      searchEl.value = '';
+      render();
+    });
+  });
+}
+
+searchEl.addEventListener('input', () => { activeModel=''; render(); });
+clearBtn.addEventListener('click', () => { searchEl.value=''; render(); searchEl.focus(); });
+
+render();
+</script>
+</body>
+</html>
